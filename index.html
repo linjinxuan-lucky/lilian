@@ -34,16 +34,11 @@
             font-size: 18px;
         }
         
-        .fixed-position {
-            background-color: #ffeb3b;
-            font-weight: bold;
-            padding: 5px;
-        }
+        /* 移除了 .fixed-position 样式，因为我们不再高亮显示刘润泽 */
     </style>
 </head>
 <body>
     <h1>抽签系统</h1>
-    <p>每次抽签"刘润泽"将始终排在第5位</p>
     
     <button id="drawButton">开始抽签</button>
     
@@ -218,11 +213,10 @@
                     // 执行抽签
                     const results = lottery.draw();
                     
-                    // 显示结果
+                    // 显示结果（不再添加高亮类）
                     let resultHTML = '<ol>';
                     results.forEach((person, index) => {
-                        const positionClass = index === 4 ? 'fixed-position' : '';
-                        resultHTML += `<li class="${positionClass}">${person}</li>`;
+                        resultHTML += `<li>${person}</li>`;
                     });
                     resultHTML += '</ol>';
                     
