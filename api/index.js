@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // 静态文件服务
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname, '..')));
 
 // 数据管理类
 class DataManager {
@@ -296,7 +296,7 @@ app.get('/api/participants/stats', (req, res) => {
 
 // 根路径重定向到主页
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
 // 404处理
@@ -316,21 +316,4 @@ app.use((err, req, res, next) => {
     });
 });
 
-// 在Vercel环境中导出app，在本地环境中直接启动服务器
-if (require.main === module) {
-    // 本地启动服务器
-    app.listen(PORT, () => {
-        console.log(`服务器运行在 http://localhost:${PORT}`);
-        console.log(`API文档: http://localhost:${PORT}/api/participants`);
-        console.log(`数据文件: ${DATA_FILE}`);
-    });
-    
-    // 优雅关闭
-    process.on('SIGINT', () => {
-        console.log('正在关闭服务器...');
-        process.exit(0);
-    });
-} else {
-    // Vercel环境中导出app
-    module.exports = app;
-}
+module.exports = app;
