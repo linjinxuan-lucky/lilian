@@ -1,0 +1,14 @@
+{
+  "name": "抽签系统",
+  "description": "一个基于Node.js和Express的抽签应用",
+  "repository": "https://github.com/your-username/chouqian-system",
+  "logo": "https://node-js-sample.herokuapp.com/node.png",
+  "keywords": ["node", "express", "抽签", "lottery"],
+  "image": "heroku/nodejs",
+  "env": {
+    "PORT": {
+      "description": "应用端口",
+      "value": "3000"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+@echo off
+echo 启动抽签系统服务器...
+echo.
+echo 正在检查依赖...
+npm install
+echo.
+echo 启动服务器...
+npm start
+pause

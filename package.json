@@ -1,0 +1,23 @@
+{
+  "name": "chouqian-server",
+  "version": "1.0.0",
+  "description": "抽签系统后端服务器",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "deploy": "node deploy.js",
+    "simple-deploy": "node simple-deploy.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": ["抽签", "lottery", "express"],
+  "author": "",
+  "license": "MIT"
+}
