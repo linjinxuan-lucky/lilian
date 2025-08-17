@@ -316,4 +316,8 @@ app.use((err, req, res, next) => {
     });
 });
 
+// Vercel无服务器函数需要以这种方式导出
 module.exports = app;
+module.exports.handler = (req, res) => {
+    app(req, res);
+};
