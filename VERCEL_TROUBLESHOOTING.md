@@ -22,18 +22,30 @@
 - **依赖安装问题**：检查[package.json](file:///e:/test_demo/chouqian/package.json)中的依赖是否正确
 - **路径问题**：检查文件路径是否正确，特别是在Windows和Unix系统之间
 
-### 3. 数据丢失问题
+### 3. 文件系统只读错误（EROFS）
+
+**问题描述**：日志中出现"EROFS: read-only file system"错误
+
+**原因说明**：
+Vercel的无服务器环境具有只读文件系统，除了`/tmp`目录外，不能写入其他目录。
+
+**解决方案**：
+- 使用`/tmp`目录存储数据文件
+- 实现内存存储作为后备方案
+- 对于生产环境，迁移到外部数据库
+
+### 4. 数据丢失问题
 
 **问题描述**：参与者数据在一段时间后消失
 
 **原因说明**：
-Vercel的无服务器架构会在函数空闲时终止，文件系统不是持久化的。
+Vercel的无服务器架构会在函数空闲时终止，即使是/tmp目录中的文件也可能丢失。
 
 **解决方案**：
 - 使用外部数据库（如MongoDB、PostgreSQL等）
 - 使用外部存储服务（如Firebase、AWS S3等）
 
-### 4. 静态文件无法加载
+### 5. 静态文件无法加载
 
 **问题描述**：CSS样式或前端JavaScript无法加载
 
@@ -69,11 +81,13 @@ vercel dev
 
 ### 环境变量
 在Vercel项目设置中配置以下环境变量：
+- `VERCEL`: 设置为"true"以启用Vercel特定代码路径
 - `DATA_FILE`: 数据文件路径（注意Vercel文件系统限制）
 
 ### 文件系统限制
 - 不能写入除/tmp目录以外的文件系统
 - 每个部署都是独立的，文件不会在部署间保持
+- 即使是/tmp目录中的文件也可能在函数重启后丢失
 
 ## 最佳实践
 
@@ -86,8 +100,7 @@ vercel dev
 ### 2. 配置管理
 使用环境变量管理不同环境的配置：
 ```javascript
-const DATA_FILE = process.env.DATA_FILE || './participants.json';
-const PORT = process.env.PORT || 3000;
+const DATA_FILE = process.env.VERCEL ? '/tmp/participants.json' : './participants.json';
 ```
 
 ### 3. 错误处理

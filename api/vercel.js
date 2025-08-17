@@ -5,10 +5,9 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// 在Vercel环境中使用/tmp目录，否则使用当前目录
-const DATA_FILE = process.env.VERCEL ? '/tmp/participants.json' : (process.env.DATA_FILE || './participants.json');
+// 在Vercel环境中使用/tmp目录
+const DATA_FILE = '/tmp/participants.json';
 
 // 中间件配置
 app.use(cors());
@@ -18,147 +17,139 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // 静态文件服务
 app.use(express.static(path.join(__dirname, '..')));
 
-// 数据管理类
-class DataManager {
-    constructor() {
-        this.participants = [];
-        this.loadData();
+// 检查/tmp目录是否可写
+function isWritable() {
+    try {
+        fs.accessSync('/tmp', fs.constants.W_OK);
+        return true;
+    } catch (err) {
+        return false;
     }
+}
 
-    // 加载数据
-    loadData() {
+// 数据存储（内存中）
+let participants = [];
+
+// 初始化数据（尝试从/tmp目录加载）
+function initializeData() {
+    if (isWritable()) {
         try {
             if (fs.existsSync(DATA_FILE)) {
                 const data = fs.readFileSync(DATA_FILE, 'utf8');
-                this.participants = JSON.parse(data);
+                participants = JSON.parse(data);
+                console.log('从/tmp目录加载数据成功');
             } else {
-                this.participants = [];
-                this.saveData();
+                // 创建空数据文件
+                fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2));
+                console.log('创建新的数据文件');
             }
         } catch (error) {
-            console.error('加载数据错误:', error);
-            this.participants = [];
+            console.error('初始化数据时出错:', error);
         }
+    } else {
+        console.log('无法写入/tmp目录，使用内存存储');
     }
+}
 
-    // 保存数据
-    saveData() {
+// 保存数据
+function saveData() {
+    if (isWritable()) {
         try {
-            fs.writeFileSync(DATA_FILE, JSON.stringify(this.participants, null, 2));
+            fs.writeFileSync(DATA_FILE, JSON.stringify(participants, null, 2));
         } catch (error) {
             console.error('保存数据错误:', error);
-            // 在Vercel环境中，如果/tmp目录也不可写，使用内存存储
-            if (process.env.VERCEL) {
-                console.log('在Vercel环境中，数据将仅存储在内存中');
-            }
         }
-    }
-
-    // 获取所有参与者
-    getAllParticipants() {
-        return this.participants.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    }
-
-    // 添加参与者
-    addParticipant(name, phone) {
-        // 检查手机号是否已存在
-        const existing = this.participants.find(p => p.phone === phone);
-        if (existing) {
-            throw new Error('该手机号已存在，请使用其他手机号');
-        }
-
-        const participant = {
-            id: this.getNextId(),
-            name: name.trim(),
-            phone: phone.trim(),
-            created_at: new Date().toISOString()
-        };
-
-        this.participants.push(participant);
-        this.saveData();
-        return participant;
-    }
-
-    // 删除参与者
-    deleteParticipant(id) {
-        const index = this.participants.findIndex(p => p.id === parseInt(id));
-        if (index === -1) {
-            return false;
-        }
-        this.participants.splice(index, 1);
-        this.saveData();
-        return true;
-    }
-
-    // 更新参与者
-    updateParticipant(id, name, phone) {
-        const participant = this.participants.find(p => p.id === parseInt(id));
-        if (!participant) {
-            return false;
-        }
-
-        // 检查手机号是否被其他参与者使用
-        const existing = this.participants.find(p => p.phone === phone && p.id !== parseInt(id));
-        if (existing) {
-            throw new Error('该手机号已被其他参与者使用');
-        }
-
-        participant.name = name.trim();
-        participant.phone = phone.trim();
-        this.saveData();
-        return true;
-    }
-
-    // 搜索参与者
-    searchParticipants(query) {
-        const searchTerm = query.toLowerCase();
-        return this.participants.filter(p => 
-            p.name.toLowerCase().includes(searchTerm) || 
-            p.phone.includes(searchTerm)
-        ).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    }
-
-    // 获取统计信息
-    getStats() {
-        return {
-            total: this.participants.length
-        };
-    }
-
-    // 获取下一个ID
-    getNextId() {
-        if (this.participants.length === 0) {
-            return 1;
-        }
-        return Math.max(...this.participants.map(p => p.id)) + 1;
     }
 }
 
-// 初始化数据管理器
-let dataManager;
-try {
-    dataManager = new DataManager();
-} catch (error) {
-    console.error('初始化数据管理器失败:', error);
-    // 创建一个空的数据管理器
-    dataManager = {
-        getAllParticipants: () => [],
-        addParticipant: (name, phone) => {
-            throw new Error('数据存储不可用');
-        },
-        deleteParticipant: () => false,
-        updateParticipant: () => false,
-        searchParticipants: () => [],
-        getStats: () => ({ total: 0 })
+// 获取所有参与者
+function getAllParticipants() {
+    return participants.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+}
+
+// 添加参与者
+function addParticipant(name, phone) {
+    // 检查手机号是否已存在
+    const existing = participants.find(p => p.phone === phone);
+    if (existing) {
+        throw new Error('该手机号已存在，请使用其他手机号');
+    }
+
+    const participant = {
+        id: getNextId(),
+        name: name.trim(),
+        phone: phone.trim(),
+        created_at: new Date().toISOString()
+    };
+
+    participants.push(participant);
+    saveData();
+    return participant;
+}
+
+// 删除参与者
+function deleteParticipant(id) {
+    const index = participants.findIndex(p => p.id === parseInt(id));
+    if (index === -1) {
+        return false;
+    }
+    participants.splice(index, 1);
+    saveData();
+    return true;
+}
+
+// 更新参与者
+function updateParticipant(id, name, phone) {
+    const participant = participants.find(p => p.id === parseInt(id));
+    if (!participant) {
+        return false;
+    }
+
+    // 检查手机号是否被其他参与者使用
+    const existing = participants.find(p => p.phone === phone && p.id !== parseInt(id));
+    if (existing) {
+        throw new Error('该手机号已被其他参与者使用');
+    }
+
+    participant.name = name.trim();
+    participant.phone = phone.trim();
+    saveData();
+    return true;
+}
+
+// 搜索参与者
+function searchParticipants(query) {
+    const searchTerm = query.toLowerCase();
+    return participants.filter(p => 
+        p.name.toLowerCase().includes(searchTerm) || 
+        p.phone.includes(searchTerm)
+    ).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+}
+
+// 获取统计信息
+function getStats() {
+    return {
+        total: participants.length
     };
 }
+
+// 获取下一个ID
+function getNextId() {
+    if (participants.length === 0) {
+        return 1;
+    }
+    return Math.max(...participants.map(p => p.id)) + 1;
+}
+
+// 初始化数据
+initializeData();
 
 // API路由
 
 // 获取所有参与者
 app.get('/api/participants', (req, res) => {
     try {
-        const participants = dataManager.getAllParticipants();
+        const participants = getAllParticipants();
         res.json(participants);
     } catch (error) {
         console.error('获取参与者列表错误:', error);
@@ -191,7 +182,7 @@ app.post('/api/participants', (req, res) => {
     }
     
     try {
-        const participant = dataManager.addParticipant(name, phone);
+        const participant = addParticipant(name, phone);
         res.json({
             success: true,
             message: '参与者信息添加成功',
@@ -210,7 +201,7 @@ app.delete('/api/participants/:id', (req, res) => {
     const { id } = req.params;
     
     try {
-        const success = dataManager.deleteParticipant(id);
+        const success = deleteParticipant(id);
         if (success) {
             res.json({
                 success: true,
@@ -254,7 +245,7 @@ app.put('/api/participants/:id', (req, res) => {
     }
     
     try {
-        const success = dataManager.updateParticipant(id, name, phone);
+        const success = updateParticipant(id, name, phone);
         if (success) {
             res.json({
                 success: true,
@@ -286,7 +277,7 @@ app.get('/api/participants/search', (req, res) => {
     }
     
     try {
-        const results = dataManager.searchParticipants(q);
+        const results = searchParticipants(q);
         res.json(results);
     } catch (error) {
         console.error('搜索错误:', error);
@@ -300,7 +291,7 @@ app.get('/api/participants/search', (req, res) => {
 // 获取参与者统计信息
 app.get('/api/participants/stats', (req, res) => {
     try {
-        const stats = dataManager.getStats();
+        const stats = getStats();
         res.json({
             success: true,
             ...stats
@@ -336,8 +327,4 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Vercel无服务器函数需要以这种方式导出
 module.exports = app;
-module.exports.handler = (req, res) => {
-    app(req, res);
-};

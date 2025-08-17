@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/[[...slug]].js",
+      "src": "api/vercel.js",
       "use": "@vercel/node"
     },
     {
@@ -25,14 +25,15 @@
     },
     {
       "src": "/api/(.*)",
-      "dest": "/api/[[...slug]].js"
+      "dest": "/api/vercel.js"
     },
     {
       "src": "/(.*)",
-      "dest": "/api/[[...slug]].js"
+      "dest": "/api/vercel.js"
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "VERCEL": "true"
   }
 }

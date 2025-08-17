@@ -13,40 +13,13 @@
 
 ## 技术栈
 
-### 前端
-- HTML5 + CSS3 + JavaScript
-- 原生JavaScript，无需框架
-- 响应式设计
-- 现代化UI组件
-
-### 后端
-- Node.js + Express.js
-- JSON文件数据存储
-- RESTful API设计
-- CORS支持
-
-## 安装和运行
-
-### 1. 安装依赖
-```bash
-npm install
-```
-
-### 2. 启动服务器
-```bash
-# 开发模式（自动重启）
-npm run dev
-
-# 生产模式
-npm start
-```
-
-### 3. 访问应用
-打开浏览器访问: http://localhost:3000
+- 前端：HTML5 + CSS3 + 原生JavaScript
+- 后端：Node.js + Express.js
+- 数据存储：JSON文件
 
 ## 快速部署 (Vercel)
 
-最简单的部署方式是使用Vercel一键部署：
+最简单的部署方式是使用Vercel：
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/import/project?template=https://github.com/your-username/your-repo)
 
@@ -55,6 +28,13 @@ npm start
 ## 部署选项
 
 ### Vercel部署（推荐）
+
+1. Fork本仓库到您的GitHub账户
+2. 访问[Vercel](https://vercel.com/)并注册/登录
+3. 创建新项目并选择此仓库
+4. Vercel会自动检测配置并部署应用
+
+**重要提示**：Vercel的无服务器环境具有只读文件系统，除了`/tmp`目录外不能写入其他目录。这意味着数据可能不会持久保存。如需生产环境部署，请考虑使用外部数据库。
 
 ### Railway部署
 
@@ -90,7 +70,27 @@ npm start
 
 - `PORT`：服务器端口（默认3000）
 - `DATA_FILE`：数据文件路径（默认./participants.json）
+- `VERCEL`：是否在Vercel环境中运行（Vercel部署时自动设置为true）
 
 ## 数据存储
 
-应用使用 `participants.json` 文件存储数据。在生产环境中，建议使用更可靠的数据库解决方案。
+应用使用 `participants.json` 文件存储数据。
+
+**Vercel环境注意事项**：
+- Vercel的无服务器架构具有只读文件系统
+- 应用会尝试使用`/tmp/participants.json`存储数据
+- 即使使用`/tmp`目录，数据也可能在函数重启后丢失
+- 生产环境建议使用外部数据库解决方案
+
+## 开发
+
+```bash
+# 安装依赖
+npm install
+
+# 开发模式运行（支持热重载）
+npm run dev
+
+# 生产模式运行
+npm start
+```
